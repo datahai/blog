@@ -44,7 +44,39 @@ SELECT TOP 10 *
 FROM [LDW].[WebTelemetryDelta]
 WHERE EventDate = '2022-03-03';
 
---show 10 rows of the source data
-SELECT TOP 10 *
-FROM [LDW].[WebTelemetryDelta]
-WHERE EventDate = '2022-03-03';
+--aggregate product category and name 
+;WITH webtelemetry
+AS
+(
+    SELECT
+        ProductID,
+        COUNT(*) AS TotalEventCount
+    FROM LDW.WebTelemetryDelta
+    GROUP BY ProductID
+)
+SELECT 
+    DP.EnglishProductCategoryName AS ProductCategory,
+    DP.EnglishProductName AS ProductName,
+    SUM(WT.TotalEventCount) AS TotalEventCount
+FROM DW.vwProductHierarchy DP
+INNER JOIN webtelemetry WT ON DP.ProductKey + 400 = WT.ProductID
+GROUP BY 
+    DP.EnglishProductCategoryName,
+    DP.EnglishProductName
+
+--aggregate product category
+;WITH webtelemetry
+AS
+(
+    SELECT
+        ProductID,
+        COUNT(*) AS TotalEventCount
+    FROM LDW.WebTelemetryDelta
+    GROUP BY ProductID
+)
+SELECT 
+    DP.EnglishProductCategoryName AS ProductCategory,    
+    SUM(WT.TotalEventCount) AS TotalEventCount
+FROM DW.vwProductHierarchy DP
+INNER JOIN webtelemetry WT ON DP.ProductKey + 400 = WT.ProductID
+GROUP BY DP.EnglishProductCategoryName
